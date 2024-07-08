@@ -27,7 +27,7 @@ typedef struct Entity {
     int x;
     int y;
     SDL_Texture *texture;
-    int health;
+    int health; // 0 = inactivo, 1 = activo
 } Entity;
 
 int game_is_running;
@@ -135,7 +135,7 @@ void initStage() {
     memset(player, 0, sizeof(Entity));
     player->x = 100;
     player->y = (SCREEN_HEIGHT / 2) - 18;
-    player->health = 0;
+    player->health = 1;
     player->texture = loadTexture("./sprites/player.png");
 
     // inicializar la lista de balas del jugador
@@ -150,7 +150,7 @@ void initStage() {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         enemyList[i].x = SCREEN_WIDTH + (i + 1) * 200; // fuera de la pantalla en la primera iteracion
         enemyList[i].y = (rand() % SCREEN_HEIGHT) - 100;
-        enemyList[i].health = 0;
+        enemyList[i].health = 1;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
 }
@@ -180,16 +180,16 @@ void enemyLogic() {
 
 
 void playerLogic() {
-    if (app.up && player->y > 0) {
+    if (app.up && player->y > 0 && player->health == 1) {
         player->y -= PLAYER_SPEED;
     }
-    if (app.down && player->y < SCREEN_HEIGHT - 45) {
+    if (app.down && player->y < SCREEN_HEIGHT - 45 && player->health == 1) {
         player->y += PLAYER_SPEED;
     }
-    if (app.left && player->x > 0) {
+    if (app.left && player->x > 0 && player->health == 1) {
         player->x -= PLAYER_SPEED;
     }
-    if (app.right && player->x < SCREEN_WIDTH - 45) {
+    if (app.right && player->x < SCREEN_WIDTH - 45 && player->health == 1) {
         player->x += PLAYER_SPEED;
     }
 
@@ -249,8 +249,9 @@ void logic() {
 
     // colision entre jugador y enemigo
     for (int i = 0; i < ENEMY_COUNT; i++) {
-        if (checkCollision(player, &enemyList[i])) {
-            game_is_running = FALSE; // terminar el juego
+        if (checkCollision(player, &enemyList[i]) && player->health == 1) {
+            player->health = 0;
+            printf("estas muerto!\n");
             return;
         }
     }
