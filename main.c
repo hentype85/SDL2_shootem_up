@@ -250,7 +250,7 @@ void logic() {
     // colision entre jugador y enemigo
     for (int i = 0; i < ENEMY_COUNT; i++) {
         if (checkCollision(player, &enemyList[i])) {
-            game_is_running = FALSE; // cerrar el juego
+            game_is_running = FALSE; // terminar el juego
             return;
         }
     }
