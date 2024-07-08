@@ -3,7 +3,7 @@
 `gcc -o game *.c -I ./SDL2/include -L ./SDL2/lib -lmingw32 -lSDL2main -lSDL2_image -lSDL2`
 
 ```
-# gcc                  compilador C
+# gcc                   compilador C
 # -o game               nombre del archivo de salida
 # *.c                   codigo fuente a compilar
 # -I SDL2/include       llamada al compilador g++ con la opcion -I para especificar la ubicacion de los headers
