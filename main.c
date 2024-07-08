@@ -9,7 +9,9 @@
 
 #define PLAYER_SPEED          5
 #define PLAYER_BULLET_SPEED   20
+#define PLAYER_BULLET_COUNT   10
 #define ENEMY_SPEED           3
+#define ENEMY_COUNT           10
 
 typedef struct App {
     SDL_Renderer *renderer;
@@ -31,12 +33,11 @@ typedef struct Entity {
 int game_is_running;
 
 App app;
-Entity *player, *bullet, bulletList[10], *enemy, enemyList[5];
+Entity *player, *bullet, bulletList[PLAYER_BULLET_COUNT], *enemy, enemyList[ENEMY_COUNT];
 SDL_Rect dest;
 
 
 void destroy_window() {
-    free(enemy);
     free(player);
     SDL_DestroyRenderer(app.renderer);
     SDL_DestroyWindow(app.window);
@@ -138,7 +139,7 @@ void initStage() {
     player->texture = loadTexture("./sprites/player.png");
 
     // inicializar la lista de balas del jugador
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < PLAYER_BULLET_COUNT; i++) {
         bulletList[i].x -= 400; // fuera de la pantalla
         bulletList[i].y = 0;
         bulletList[i].health = 0;
@@ -146,9 +147,9 @@ void initStage() {
     }
 
     // inicializar tanda de 5 enemigos
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < ENEMY_COUNT; i++) {
         enemyList[i].x = SCREEN_WIDTH + (i + 1) * 200; // fuera de la pantalla en la primera iteracion
-        enemyList[i].y = rand() % SCREEN_HEIGHT;
+        enemyList[i].y = (rand() % SCREEN_HEIGHT) - 100;
         enemyList[i].health = 0;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
@@ -156,15 +157,21 @@ void initStage() {
 
 
 void enemyLogic() {
-    for (int i = 0; i < 5; i++) { // recorrer la lista de 5 enemigos
+    for (int i = 0; i < ENEMY_COUNT; i++) { // recorrer la lista de 5 enemigos
+        // mover enemigos
         enemy = &enemyList[i];
-        // mover enemigo
         if (enemy->x > 0) { // mientras no llegue al borde izquierdo
             enemy->x -= ENEMY_SPEED; // incrementar x
         }
         else {
             enemy->x = SCREEN_WIDTH + (i + 1) * 200; // reiniciar posicion x
-            enemy->y = rand() % SCREEN_HEIGHT; // reiniciar posicion y
+            enemyList[i].y = rand() % SCREEN_HEIGHT; // reiniciar posicion y
+            if (enemyList[i].y <= 0) { // si la posicion y es menor o igual a 0
+                enemyList[i].y += 100;
+            }
+            else if (enemyList[i].y >= SCREEN_HEIGHT - 45) {
+                enemyList[i].y -= 100;
+            }
         }
 
         render(enemy->texture, enemy->x, enemy->y);
@@ -216,10 +223,37 @@ void playerBulletLogic() {
 }
 
 
+int checkCollision(Entity *player, Entity *enemy) {
+    // colisiones entre entidades
+    if (player->x + 45 < enemy->x) {
+        return 0;
+    }
+    if (player->y + 45 < enemy->y) {
+        return 0;
+    }
+    if (player->x > enemy->x + 45) {
+        return 0;
+    }
+    if (player->y > enemy->y + 45) {
+        return 0;
+    }
+
+    return 1;
+}
+
+
 void logic() {
     playerLogic();
     playerBulletLogic();
     enemyLogic();
+
+    // colision entre jugador y enemigo
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        if (checkCollision(player, &enemyList[i])) {
+            game_is_running = FALSE; // cerrar el juego
+            return;
+        }
+    }
 }
 
 
@@ -271,7 +305,7 @@ int main(int argc, char* argv[]) {
         logic(); // logica del juego
         presentScene(); // presentar la escena de juego
 
-        SDL_Delay(16); // esperar 16ms para mantener 60fps
+        SDL_Delay(8); // esperar milisegundos
     }
 
     destroy_window();
