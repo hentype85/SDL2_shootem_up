@@ -239,7 +239,7 @@ void playerBulletLogic() {
             }
 
         }
-        else if (app.fire && bullet->health == 0 && fireCooldown > 9) {
+        else if (app.fire && fireCooldown > 9) { 
             bullet->x = player->x + 30;
             bullet->y = player->y + 18;
             bullet->health = 1; // activar bala
