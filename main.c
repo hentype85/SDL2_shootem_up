@@ -197,32 +197,6 @@ void playerLogic() {
 }
 
 
-void playerBulletLogic() {
-    static int fireCooldown = 0; // limitar la velocidad de disparo
-
-    for (int i = 0; i < 10; i++) { // recorrer la lista de balas
-        bullet = &bulletList[i]; // obtener bala actual
-
-        if (bullet->health == 1) {
-            bullet->x += PLAYER_BULLET_SPEED; // mover bala
-            if (bullet->x > SCREEN_WIDTH) {
-                bullet->health = 0; // desactivar bala
-            }
-        } 
-        else if (app.fire && bullet->health == 0 && fireCooldown > 9) {
-            bullet->x = player->x + 30;
-            bullet->y = player->y + 18;
-            bullet->health = 1; // activar bala
-
-            fireCooldown = 0; // reiniciar velocidad de disparo
-        }
-        render(bullet->texture, bullet->x, bullet->y); // dibujar bala
-    }
-
-    fireCooldown++; // incrementar
-}
-
-
 int checkCollision(Entity *player, Entity *enemy) {
     // colisiones entre entidades
     if (player->x + 45 < enemy->x) {
@@ -241,6 +215,53 @@ int checkCollision(Entity *player, Entity *enemy) {
     return 1;
 }
 
+int checkBulletEnemyCollision(Entity *bullet, Entity *enemy) {
+    SDL_Rect bulletRect = { bullet->x, bullet->y, 10, 10 };
+    SDL_Rect enemyRect = { enemy->x, enemy->y, 45, 45 };
+
+    if (SDL_HasIntersection(&bulletRect, &enemyRect)) {
+        return 1; // colision
+    }
+    return 0; // sin colision
+}
+
+
+void playerBulletLogic() {
+    static int fireCooldown = 0; // limitar la velocidad de disparo
+
+    for (int i = 0; i < 10; i++) { // recorrer la lista de balas
+        bullet = &bulletList[i]; // obtener bala actual
+
+        if (bullet->health == 1) {
+            bullet->x += PLAYER_BULLET_SPEED; // mover bala
+            if (bullet->x > SCREEN_WIDTH) {
+                bullet->health = 0; // desactivar bala
+            }
+
+            // si la bala colisiona con un enemigo activo
+            for (int j = 0; j < ENEMY_COUNT; j++) {
+                if (enemyList[j].health == 1 && checkBulletEnemyCollision(bullet, &enemyList[j])) {
+                    // borrar bala y enemigo
+                    bullet->x = SCREEN_WIDTH + 100; // fuera de la pantalla
+                    enemyList[j].x = SCREEN_WIDTH + (j + 1) * 200; // fuera de la pantalla
+                }
+            }
+
+        }
+        else if (app.fire && bullet->health == 0 && fireCooldown > 9) {
+            bullet->x = player->x + 30;
+            bullet->y = player->y + 18;
+            bullet->health = 1; // activar bala
+
+            fireCooldown = 0; // reiniciar velocidad de disparo
+        }
+
+        render(bullet->texture, bullet->x, bullet->y); // dibujar bala
+    }
+
+    fireCooldown++; // incrementar
+}
+
 
 void logic() {
     playerLogic();
@@ -250,8 +271,13 @@ void logic() {
     // colision entre jugador y enemigo
     for (int i = 0; i < ENEMY_COUNT; i++) {
         if (checkCollision(player, &enemyList[i]) && player->health == 1) {
-            player->health = 0;
-            printf("estas muerto!\n");
+            // eliminar jugador
+            player->health = 0; // desactivar jugador
+            player->x = SCREEN_WIDTH + 100; // jugador fuera de la pantalla
+
+            // salir del juego
+            game_is_running = FALSE;
+
             return;
         }
     }
