@@ -36,7 +36,6 @@ int game_is_running;
 
 App app;
 Entity *player, *bullet, bulletList[PLAYER_BULLET_COUNT], *enemy, enemyList[ENEMY_COUNT];
-SDL_Rect dest;
 
 
 void destroy_window() {
@@ -123,6 +122,7 @@ SDL_Texture *loadTexture(char *filename) {
 
 
 void render(SDL_Texture *texture, int x, int y) {
+    SDL_Rect dest;
     dest.x = x;
     dest.y = y;
 
@@ -146,8 +146,8 @@ void initStage() {
     for (int i = 0; i < PLAYER_BULLET_COUNT; i++) {
         bulletList[i].x -= 400; // fuera de la pantalla
         bulletList[i].y = 0;
-        bulletList[i].w = 45;
-        bulletList[i].h = 45;
+        bulletList[i].w = 10;
+        bulletList[i].h = 10;
         bulletList[i].health = 0;
         bulletList[i].texture = loadTexture("./sprites/playerBullet.png");
     }
@@ -156,8 +156,8 @@ void initStage() {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         enemyList[i].x = SCREEN_WIDTH + (i + 1) * 200; // fuera de la pantalla en la primera iteracion
         enemyList[i].y = (rand() % SCREEN_HEIGHT) - 100;
-        enemyList[i].w = 10;
-        enemyList[i].h = 10;
+        enemyList[i].w = 45;
+        enemyList[i].h = 45;
         enemyList[i].health = 1;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
@@ -207,10 +207,10 @@ void playerLogic() {
 
 int checkEntityCollision(Entity *entiy_a, Entity *entiy_b) {
     // colisiones entre jugador y enemigo
-    SDL_Rect playerRect = { entiy_a->x, entiy_a->y, entiy_a->w, entiy_a->h };
-    SDL_Rect enemyRect = { entiy_b->x, entiy_b->y, entiy_b->w, entiy_b->h };
+    SDL_Rect entiy_a_Rect = { entiy_a->x, entiy_a->y, entiy_a->w, entiy_a->h };
+    SDL_Rect entiy_b_Rect = { entiy_b->x, entiy_b->y, entiy_b->w, entiy_b->h };
 
-    if (SDL_HasIntersection(&playerRect, &enemyRect)) {
+    if (SDL_HasIntersection(&entiy_a_Rect, &entiy_b_Rect)) {
         return TRUE; // colision
     } 
     return FALSE; // sin colision
@@ -233,13 +233,13 @@ void playerBulletLogic() {
             for (int j = 0; j < ENEMY_COUNT; j++) {
                 if (enemyList[j].health == 1 &&  checkEntityCollision(bullet, &enemyList[j])) {
                     // borrar bala y enemigo
-                    bullet->x = SCREEN_WIDTH + 100; // fuera de la pantalla
-                    enemyList[j].x = SCREEN_WIDTH + (j + 1) * 200; // fuera de la pantalla
+                    bullet->x = SCREEN_WIDTH + 400; // fuera de la pantalla
+                    enemyList[j].x = SCREEN_WIDTH + 400; // fuera de la pantalla
                 }
             }
 
         }
-        else if (app.fire && fireCooldown > 9) { 
+        else if (app.fire && fireCooldown > 9 && player->health == 1) { 
             bullet->x = player->x + 30;
             bullet->y = player->y + 18;
             bullet->health = 1; // activar bala
@@ -261,10 +261,10 @@ void logic() {
 
     // colision entre jugador y enemigo
     for (int i = 0; i < ENEMY_COUNT; i++) {
-        if ( checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
-            // player->health = 0; // desactivar jugador
-            player->x = 0; // cambiar posicion x
-            player->y = 0; // cambiar posicion y
+        if (checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
+            player->health = 0; // desactivar jugador
+            player->x = 400; // cambiar posicion x
+            player->y = 400; // cambiar posicion y
 
             // salir del juego
             game_is_running = FALSE;
