@@ -26,6 +26,8 @@ typedef struct App {
 typedef struct Entity {
     int x;
     int y;
+    int w;
+    int h;
     SDL_Texture *texture;
     int health; // 0 = inactivo, 1 = activo
 } Entity;
@@ -135,6 +137,8 @@ void initStage() {
     memset(player, 0, sizeof(Entity));
     player->x = 100;
     player->y = (SCREEN_HEIGHT / 2) - 18;
+    player->w = 45;
+    player->h = 45;
     player->health = 1;
     player->texture = loadTexture("./sprites/player.png");
 
@@ -142,6 +146,8 @@ void initStage() {
     for (int i = 0; i < PLAYER_BULLET_COUNT; i++) {
         bulletList[i].x -= 400; // fuera de la pantalla
         bulletList[i].y = 0;
+        bulletList[i].w = 45;
+        bulletList[i].h = 45;
         bulletList[i].health = 0;
         bulletList[i].texture = loadTexture("./sprites/playerBullet.png");
     }
@@ -150,6 +156,8 @@ void initStage() {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         enemyList[i].x = SCREEN_WIDTH + (i + 1) * 200; // fuera de la pantalla en la primera iteracion
         enemyList[i].y = (rand() % SCREEN_HEIGHT) - 100;
+        enemyList[i].w = 10;
+        enemyList[i].h = 10;
         enemyList[i].health = 1;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
@@ -197,32 +205,15 @@ void playerLogic() {
 }
 
 
-int checkCollision(Entity *player, Entity *enemy) {
-    // colisiones entre entidades
-    if (player->x + 45 < enemy->x) {
-        return 0;
-    }
-    if (player->y + 45 < enemy->y) {
-        return 0;
-    }
-    if (player->x > enemy->x + 45) {
-        return 0;
-    }
-    if (player->y > enemy->y + 45) {
-        return 0;
-    }
+int checkEntityCollision(Entity *entiy_a, Entity *entiy_b) {
+    // colisiones entre jugador y enemigo
+    SDL_Rect playerRect = { entiy_a->x, entiy_a->y, entiy_a->w, entiy_a->h };
+    SDL_Rect enemyRect = { entiy_b->x, entiy_b->y, entiy_b->w, entiy_b->h };
 
-    return 1;
-}
-
-int checkBulletEnemyCollision(Entity *bullet, Entity *enemy) {
-    SDL_Rect bulletRect = { bullet->x, bullet->y, 10, 10 };
-    SDL_Rect enemyRect = { enemy->x, enemy->y, 45, 45 };
-
-    if (SDL_HasIntersection(&bulletRect, &enemyRect)) {
-        return 1; // colision
-    }
-    return 0; // sin colision
+    if (SDL_HasIntersection(&playerRect, &enemyRect)) {
+        return TRUE; // colision
+    } 
+    return FALSE; // sin colision
 }
 
 
@@ -240,7 +231,7 @@ void playerBulletLogic() {
 
             // si la bala colisiona con un enemigo activo
             for (int j = 0; j < ENEMY_COUNT; j++) {
-                if (enemyList[j].health == 1 && checkBulletEnemyCollision(bullet, &enemyList[j])) {
+                if (enemyList[j].health == 1 &&  checkEntityCollision(bullet, &enemyList[j])) {
                     // borrar bala y enemigo
                     bullet->x = SCREEN_WIDTH + 100; // fuera de la pantalla
                     enemyList[j].x = SCREEN_WIDTH + (j + 1) * 200; // fuera de la pantalla
@@ -270,10 +261,10 @@ void logic() {
 
     // colision entre jugador y enemigo
     for (int i = 0; i < ENEMY_COUNT; i++) {
-        if (checkCollision(player, &enemyList[i]) && player->health == 1) {
-            // eliminar jugador
-            player->health = 0; // desactivar jugador
-            player->x = SCREEN_WIDTH + 100; // jugador fuera de la pantalla
+        if ( checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
+            // player->health = 0; // desactivar jugador
+            player->x = 0; // cambiar posicion x
+            player->y = 0; // cambiar posicion y
 
             // salir del juego
             game_is_running = FALSE;
