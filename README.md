@@ -1,6 +1,8 @@
 # compilar programa C con SDL2
 
-`gcc -o game *.c -I ./SDL2/include -L ./SDL2/lib -lmingw32 -lSDL2main -lSDL2_image -lSDL2`
+`gcc -o game *.c -I ./SDL2/include -L ./SDL2/lib -lmingw32 -lSDL2main -lSDL2_image -lSDL2`  
+
+![](./gamegif.gif)  
 
 ```
 # gcc                   compilador C

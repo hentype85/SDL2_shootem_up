@@ -212,7 +212,7 @@ void enemyLogic() {
             }
         }
 
-        // Control de disparo
+        // control de disparo
         // si el enemigo esta activo y el cooldown de disparo es mayor al valor aleatorio
         if (enemy->health == 1 && enemy->fireCooldown > rand() % 300 + 100) {
             for (int j = 0; j < ENEMY_BULLET_COUNT; j++) { // recorrer la lista de balas de los enemigos
