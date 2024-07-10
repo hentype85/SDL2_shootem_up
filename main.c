@@ -2,16 +2,18 @@
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
 
-#define SCREEN_WIDTH   1280
-#define SCREEN_HEIGHT  720
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 #define TRUE 1
 #define FALSE 0
 
-#define PLAYER_SPEED          5
-#define PLAYER_BULLET_SPEED   20
-#define PLAYER_BULLET_COUNT   10
-#define ENEMY_SPEED           3
-#define ENEMY_COUNT           10
+#define PLAYER_SPEED 5
+#define PLAYER_BULLET_SPEED 20
+#define PLAYER_BULLET_COUNT 10
+#define ENEMY_SPEED 3
+#define ENEMY_COUNT 10
+#define ENEMY_BULLET_COUNT 10
+#define ENEMY_BULLET_SPEED 5
 
 typedef struct App {
     SDL_Renderer *renderer;
@@ -30,12 +32,13 @@ typedef struct Entity {
     int h;
     SDL_Texture *texture;
     int health; // 0 = inactivo, 1 = activo
+    int fireCooldown;
 } Entity;
 
 int game_is_running;
 
 App app;
-Entity *player, *bullet, bulletList[PLAYER_BULLET_COUNT], *enemy, enemyList[ENEMY_COUNT];
+Entity *player, *bullet, bulletList[PLAYER_BULLET_COUNT], *enemy, enemyList[ENEMY_COUNT], *enemyBullet, enemyBulletList[ENEMY_BULLET_COUNT];
 
 
 void destroy_window() {
@@ -140,6 +143,7 @@ void initStage() {
     player->w = 45;
     player->h = 45;
     player->health = 1;
+    player->fireCooldown = 0;
     player->texture = loadTexture("./sprites/player.png");
 
     // inicializar la lista de balas del jugador
@@ -149,6 +153,7 @@ void initStage() {
         bulletList[i].w = 10;
         bulletList[i].h = 10;
         bulletList[i].health = 0;
+        bulletList[i].fireCooldown = 0;
         bulletList[i].texture = loadTexture("./sprites/playerBullet.png");
     }
 
@@ -159,13 +164,38 @@ void initStage() {
         enemyList[i].w = 45;
         enemyList[i].h = 45;
         enemyList[i].health = 1;
+        enemyList[i].fireCooldown = 0;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
+
+    // inicializar la lista de balas de los enemigos
+    for (int i = 0; i < ENEMY_BULLET_COUNT; i++) {
+        enemyBulletList[i].x -= 400; // fuera de la pantalla
+        enemyBulletList[i].y = 0;
+        enemyBulletList[i].w = 10;
+        enemyBulletList[i].h = 10;
+        enemyBulletList[i].health = 0;
+        enemyBulletList[i].fireCooldown = 0;
+        enemyBulletList[i].texture = loadTexture("./sprites/alienBullet.png");
+    }
+}
+
+
+int checkEntityCollision(Entity *entiy_a, Entity *entiy_b) {
+    // colisiones entre jugador y enemigo
+    SDL_Rect entiy_a_Rect = { entiy_a->x, entiy_a->y, entiy_a->w, entiy_a->h };
+    SDL_Rect entiy_b_Rect = { entiy_b->x, entiy_b->y, entiy_b->w, entiy_b->h };
+
+    if (SDL_HasIntersection(&entiy_a_Rect, &entiy_b_Rect)) {
+        return TRUE; // colision
+    } 
+    return FALSE; // sin colision
 }
 
 
 void enemyLogic() {
     for (int i = 0; i < ENEMY_COUNT; i++) { // recorrer la lista de 5 enemigos
+
         // mover enemigos
         enemy = &enemyList[i];
         if (enemy->x > 0) { // mientras no llegue al borde izquierdo
@@ -182,9 +212,49 @@ void enemyLogic() {
             }
         }
 
+        // Control de disparo
+        // si el enemigo esta activo y el cooldown de disparo es mayor al valor aleatorio
+        if (enemy->health == 1 && enemy->fireCooldown > rand() % 300 + 100) {
+            for (int j = 0; j < ENEMY_BULLET_COUNT; j++) { // recorrer la lista de balas de los enemigos
+                if (enemyBulletList[j].health == 0) { 
+                    enemyBulletList[j].x = enemy->x - 10; // ajustar la posicion de la bala
+                    enemyBulletList[j].y = enemy->y + 18; // ajustar la posicion de la bala
+                    enemyBulletList[j].health = 1;
+                    break;
+                }
+            }
+            enemy->fireCooldown = 0; // Reinicia el cooldown de disparo
+        }
+        enemy->fireCooldown++; // Incrementa el cooldown de disparo
+
         render(enemy->texture, enemy->x, enemy->y);
     }
 }
+
+
+void enemyBulletLogic() {
+    for (int i = 0; i < ENEMY_BULLET_COUNT; i++) {
+        enemyBullet = &enemyBulletList[i];
+        if (enemyBullet->health == 1) {
+            enemyBullet->x -= ENEMY_BULLET_SPEED;
+            // si la bala de un enemigo colisiona con el jugador
+            if (checkEntityCollision(enemyBullet, player) && player->health == 1) { 
+                enemyBullet->health = 0;
+                enemyBullet->x = SCREEN_WIDTH + 400; // fuera de la pantalla
+                enemyBullet->y = 0;
+                player->health = 0; // desactivar jugador
+            }
+            else if (enemyBullet->x < 0) {
+                enemyBullet->health = 0; // desactivar bala
+                enemyBullet->x = SCREEN_WIDTH + 400; // fuera de la pantalla
+                enemyBullet->y = 0;
+            }
+        }
+
+        render(enemyBullet->texture, enemyBullet->x, enemyBullet->y);
+    }
+}
+
 
 
 void playerLogic() {
@@ -201,25 +271,25 @@ void playerLogic() {
         player->x += PLAYER_SPEED;
     }
 
+    // colision entre jugador y enemigo
+    for (int i = 0; i < ENEMY_COUNT; i++) {
+        if (checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
+            player->health = 0; // desactivar jugador
+            player->x = 400; 
+            player->y = 400;
+
+            // salir del juego
+            game_is_running = FALSE;
+
+            return;
+        }
+    }
+
     render(player->texture, player->x, player->y);
 }
 
 
-int checkEntityCollision(Entity *entiy_a, Entity *entiy_b) {
-    // colisiones entre jugador y enemigo
-    SDL_Rect entiy_a_Rect = { entiy_a->x, entiy_a->y, entiy_a->w, entiy_a->h };
-    SDL_Rect entiy_b_Rect = { entiy_b->x, entiy_b->y, entiy_b->w, entiy_b->h };
-
-    if (SDL_HasIntersection(&entiy_a_Rect, &entiy_b_Rect)) {
-        return TRUE; // colision
-    } 
-    return FALSE; // sin colision
-}
-
-
 void playerBulletLogic() {
-    static int fireCooldown = 0; // limitar la velocidad de disparo
-
     for (int i = 0; i < 10; i++) { // recorrer la lista de balas
         bullet = &bulletList[i]; // obtener bala actual
 
@@ -239,18 +309,18 @@ void playerBulletLogic() {
             }
 
         }
-        else if (app.fire && fireCooldown > 9 && player->health == 1) { 
+        else if (app.fire && player->fireCooldown > 9 && player->health == 1) { 
             bullet->x = player->x + 30;
             bullet->y = player->y + 18;
             bullet->health = 1; // activar bala
 
-            fireCooldown = 0; // reiniciar velocidad de disparo
+            player->fireCooldown = 0; // reiniciar velocidad de disparo
         }
 
         render(bullet->texture, bullet->x, bullet->y); // dibujar bala
     }
 
-    fireCooldown++; // incrementar
+    player->fireCooldown++; // incrementar
 }
 
 
@@ -258,20 +328,7 @@ void logic() {
     playerLogic();
     playerBulletLogic();
     enemyLogic();
-
-    // colision entre jugador y enemigo
-    for (int i = 0; i < ENEMY_COUNT; i++) {
-        if (checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
-            player->health = 0; // desactivar jugador
-            player->x = 400; // cambiar posicion x
-            player->y = 400; // cambiar posicion y
-
-            // salir del juego
-            game_is_running = FALSE;
-
-            return;
-        }
-    }
+    enemyBulletLogic();
 }
 
 
