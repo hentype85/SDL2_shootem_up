@@ -275,12 +275,8 @@ void playerLogic() {
     for (int i = 0; i < ENEMY_COUNT; i++) {
         if (checkEntityCollision(player, &enemyList[i]) && player->health == 1) {
             player->health = 0; // desactivar jugador
-            player->x = 400; 
-            player->y = 400;
-
-            // salir del juego
-            game_is_running = FALSE;
-
+            player->x = SCREEN_WIDTH + 400; // fuera de la pantalla 
+            player->y = 0;
             return;
         }
     }
