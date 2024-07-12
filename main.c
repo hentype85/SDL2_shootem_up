@@ -238,11 +238,12 @@ void enemyBulletLogic() {
         if (enemyBullet->health == 1) {
             enemyBullet->x -= ENEMY_BULLET_SPEED;
             // si la bala de un enemigo colisiona con el jugador
-            if (checkEntityCollision(enemyBullet, player) && player->health == 1) { 
+            if (checkEntityCollision(enemyBullet, player) && player->health == 1) {
                 enemyBullet->health = 0;
                 enemyBullet->x = SCREEN_WIDTH + 400; // fuera de la pantalla
                 enemyBullet->y = 0;
                 player->health = 0; // desactivar jugador
+                player->x = SCREEN_WIDTH + 400; // fuera de la pantalla
             }
             else if (enemyBullet->x < 0) {
                 enemyBullet->health = 0; // desactivar bala
@@ -254,7 +255,6 @@ void enemyBulletLogic() {
         render(enemyBullet->texture, enemyBullet->x, enemyBullet->y);
     }
 }
-
 
 
 void playerLogic() {
