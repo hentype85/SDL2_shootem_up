@@ -9,7 +9,7 @@
 
 #define PLAYER_SPEED 5
 #define PLAYER_BULLET_SPEED 20
-#define PLAYER_BULLET_COUNT 10
+#define PLAYER_BULLET_COUNT 9
 #define ENEMY_SPEED 3
 #define ENEMY_COUNT 10
 #define ENEMY_BULLET_COUNT 10
@@ -286,7 +286,7 @@ void playerLogic() {
 
 
 void playerBulletLogic() {
-    for (int i = 0; i < 10; i++) { // recorrer la lista de balas
+    for (int i = 0; i < PLAYER_BULLET_COUNT; i++) { // recorrer la lista de balas
         bullet = &bulletList[i]; // obtener bala actual
 
         if (bullet->health == 1) {
