@@ -12,6 +12,7 @@
 #define PLAYER_BULLET_COUNT 9
 #define ENEMY_SPEED 3
 #define ENEMY_COUNT 10
+#define ENEMY_MARGIN 100
 #define ENEMY_BULLET_COUNT 10
 #define ENEMY_BULLET_SPEED 5
 
@@ -159,11 +160,15 @@ void initStage() {
 
     // inicializar tanda de 5 enemigos
     for (int i = 0; i < ENEMY_COUNT; i++) {
-        enemyList[i].x = SCREEN_WIDTH + (i + 1) * 200; // fuera de la pantalla en la primera iteracion
-        enemyList[i].y = (rand() % SCREEN_HEIGHT) - 100;
         enemyList[i].w = 45;
         enemyList[i].h = 45;
         enemyList[i].health = 1;
+        while (i > 0 && abs(enemyList[i].x - enemyList[i - 1].x) < ENEMY_MARGIN) { // dentro del margen horizontal
+            enemyList[i].x = (rand() % (SCREEN_WIDTH - ENEMY_MARGIN + enemyList[i].w)) + ENEMY_MARGIN; // ajustar si es necesario
+        }
+        while (i > 0 && abs(enemyList[i].y - enemyList[i - 1].y) < ENEMY_MARGIN) { // dentro del margen vertical
+            enemyList[i].y = (rand() % (SCREEN_HEIGHT - ENEMY_MARGIN - enemyList[i].h)) + ENEMY_MARGIN; // ajustar si es necesario
+        }
         enemyList[i].fireCooldown = 0;
         enemyList[i].texture = loadTexture("./sprites/enemy.png");
     }
