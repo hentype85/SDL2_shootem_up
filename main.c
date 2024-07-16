@@ -134,6 +134,12 @@ void render(SDL_Texture *texture, int x, int y, int w, int h) {
 
     SDL_QueryTexture(texture, NULL, NULL, &dest.w, &dest.h);
     SDL_RenderCopy(app.renderer, texture, NULL, &dest);
+
+
+    // mostrar rectangulo de colision verde
+    SDL_SetRenderDrawColor(app.renderer, 0, 255, 0, 255); // color verde
+    SDL_Rect rect = { x, y, w, h }; // rectangulo de colision
+    SDL_RenderDrawRect(app.renderer, &rect); // dibujar rectangulo de colision
 }
 
 
@@ -313,8 +319,10 @@ void playerBulletLogic() {
 
         }
         else if (app.fire && player->fireCooldown > 9 && player->health == 1) { 
-            bullet->x = player->x + 30;
+            bullet->x = player->x + 45;
             bullet->y = player->y + 18;
+            bullet->h = 10;
+            bullet->w = 20;
             bullet->health = 1; // activar bala
 
             player->fireCooldown = 0; // reiniciar velocidad de disparo
