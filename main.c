@@ -125,10 +125,12 @@ SDL_Texture *loadTexture(char *filename) {
 }
 
 
-void render(SDL_Texture *texture, int x, int y) {
+void render(SDL_Texture *texture, int x, int y, int w, int h) {
     SDL_Rect dest;
     dest.x = x;
     dest.y = y;
+    dest.w = w;
+    dest.h = h;
 
     SDL_QueryTexture(texture, NULL, NULL, &dest.w, &dest.h);
     SDL_RenderCopy(app.renderer, texture, NULL, &dest);
@@ -232,7 +234,7 @@ void enemyLogic() {
         }
         enemy->fireCooldown++; // Incrementa el cooldown de disparo
 
-        render(enemy->texture, enemy->x, enemy->y);
+        render(enemy->texture, enemy->x, enemy->y, enemy->w, enemy->h);
     }
 }
 
@@ -257,7 +259,7 @@ void enemyBulletLogic() {
             }
         }
 
-        render(enemyBullet->texture, enemyBullet->x, enemyBullet->y);
+        render(enemyBullet->texture, enemyBullet->x, enemyBullet->y, enemyBullet->w, enemyBullet->h);
     }
 }
 
@@ -286,7 +288,7 @@ void playerLogic() {
         }
     }
 
-    render(player->texture, player->x, player->y);
+    render(player->texture, player->x, player->y, player->w, player->h); // dibujar jugador
 }
 
 
@@ -318,7 +320,7 @@ void playerBulletLogic() {
             player->fireCooldown = 0; // reiniciar velocidad de disparo
         }
 
-        render(bullet->texture, bullet->x, bullet->y); // dibujar bala
+        render(bullet->texture, bullet->x, bullet->y, bullet->w, bullet->h); // dibujar bala
     }
 
     player->fireCooldown++; // incrementar
