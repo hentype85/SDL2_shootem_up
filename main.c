@@ -159,7 +159,7 @@ void initStage() {
     for (int i = 0; i < PLAYER_BULLET_COUNT; i++) {
         bulletList[i].x -= 400; // fuera de la pantalla
         bulletList[i].y = 0;
-        bulletList[i].w = 10;
+        bulletList[i].w = 28;
         bulletList[i].h = 10;
         bulletList[i].health = 0;
         bulletList[i].fireCooldown = 0;
@@ -321,8 +321,6 @@ void playerBulletLogic() {
         else if (app.fire && player->fireCooldown > 9 && player->health == 1) { 
             bullet->x = player->x + 45;
             bullet->y = player->y + 18;
-            bullet->h = 10;
-            bullet->w = 20;
             bullet->health = 1; // activar bala
 
             player->fireCooldown = 0; // reiniciar velocidad de disparo
