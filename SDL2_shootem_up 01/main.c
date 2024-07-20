@@ -37,6 +37,8 @@ typedef struct Entity {
 } Entity;
 
 int game_is_running;
+int is_paused;
+SDL_Texture *pauseButtonTexture;
 int intro_state, transition_alpha;
 SDL_Texture *introTexture;
 
@@ -106,7 +108,8 @@ void doInput() {
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
                 game_is_running = FALSE;
-
+            if (event.key.keysym.scancode == SDL_SCANCODE_P) 
+                is_paused = !is_paused;
             doKeyDown(&event.key); // manejar eventos de tecla presionada
             break;
         
@@ -359,18 +362,36 @@ void prepareIntro() {
     SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
     SDL_RenderClear(app.renderer);
 
-    introTexture = loadTexture("./sprites/sdl2.png");
+    introTexture = loadTexture("./sprites/shooter.png");
 }
 
 
 void presentIntro() {
-    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
-    SDL_RenderClear(app.renderer);
+    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
+    SDL_RenderClear(app.renderer); // limpiar la pantalla
 
     SDL_SetTextureAlphaMod(introTexture, transition_alpha); // aplicar la opacidad
     SDL_RenderCopy(app.renderer, introTexture, NULL, NULL); // copiar la textura en la pantalla
 
-    SDL_RenderPresent(app.renderer);
+    SDL_RenderPresent(app.renderer); // presentar la pantalla
+}
+
+
+void renderPauseButton() {
+    pauseButtonTexture = loadTexture("./sprites/sdl2.png");
+
+    // dimensiones de la textura pausa
+    int texW, texH;
+    SDL_QueryTexture(pauseButtonTexture, NULL, NULL, &texW, &texH); // obtener las dimensiones de la textura
+
+    // coordenadas para centrar la textura de pausa en la pantalla
+    int buttonWidth = texW;  //ancho de la textura cargada
+    int buttonHeight = texH; // altura de la textura cargada
+    int buttonX = (SCREEN_WIDTH - buttonWidth) / 2; // centrar horizontalmente
+    int buttonY = (SCREEN_HEIGHT - buttonHeight) / 2; // centrar verticalmente
+
+    render(pauseButtonTexture, buttonX, buttonY, buttonWidth, buttonHeight); // dibujar la textura de pausa
+    SDL_DestroyTexture(pauseButtonTexture); // liberar la textura de pausa
 }
 
 
@@ -401,6 +422,7 @@ int initSDL() {
 int main(int argc, char* argv[]) {
 
     game_is_running = initSDL();
+    is_paused = FALSE; // estado de pausa
 
     intro_state = TRUE; // estado de la intro
     transition_alpha = 255; // transicion de la intro
@@ -423,11 +445,18 @@ int main(int argc, char* argv[]) {
                 intro_state = FALSE; // desactivar la intro
             }
         }
-        else {
+        else if (!is_paused) {
             // juego
             prepareScene(); // preparar la escena de juego
             doInput(); // manejar la entrada del usuario en el juego
             logic(); // logica del juego
+            presentScene(); // presentar la escena de juego
+        }
+        else {
+            // pausa
+            prepareScene(); // preparar la escena de juego
+            doInput(); // manejar la entrada del usuario en el juego
+            renderPauseButton(); // dibujar botn pausa
             presentScene(); // presentar la escena de juego
         }
 
