@@ -7,7 +7,9 @@
 #define TRUE 1
 #define FALSE 0
 
-#define PLAYER_SPEED 5
+#define TRANSITION_ALPHA 255
+
+#define PLAYER_SPEED 3
 #define PLAYER_BULLET_SPEED 20
 #define PLAYER_BULLET_COUNT 9
 #define ENEMY_SPEED 3
@@ -377,7 +379,7 @@ void presentIntro() {
 }
 
 
-void renderPauseButton() {
+void pauseButton() {
     pauseButtonTexture = loadTexture("./sprites/sdl2.png");
 
     // dimensiones de la textura pausa
@@ -425,7 +427,7 @@ int main(int argc, char* argv[]) {
     is_paused = FALSE; // estado de pausa
 
     intro_state = TRUE; // estado de la intro
-    transition_alpha = 255; // transicion de la intro
+    transition_alpha = TRANSITION_ALPHA; // 255 = opaco, 0 = transparente
 
     initStage(); // inicializar la escena de juego
 
@@ -457,7 +459,7 @@ int main(int argc, char* argv[]) {
             // pausa
             prepareScene(); // preparar la escena de juego
             doInput(); // manejar la entrada del usuario en el juego
-            renderPauseButton(); // dibujar botn pausa
+            pauseButton(); // mostrar el boton de pausa
             presentScene(); // presentar la escena de juego
         }
 
