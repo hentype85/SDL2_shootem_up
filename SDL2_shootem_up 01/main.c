@@ -439,11 +439,14 @@ int main(int argc, char* argv[]) {
 
             // transicion al salir de la intro
             if (transition_alpha > 0) {
-                transition_alpha -= 1; // velocidad de la transición
+                transition_alpha -= 1; // velocidad de la transicion
             }
             else {
                 intro_state = FALSE; // desactivar la intro
             }
+
+            // delay de la intro
+            SDL_Delay(8); // delay intro 8ms es 120fps
         }
         else if (!is_paused) {
             // juego
@@ -451,6 +454,9 @@ int main(int argc, char* argv[]) {
             doInput(); // manejar la entrada del usuario en el juego
             logic(); // logica del juego
             presentScene(); // presentar la escena de juego
+
+            // delay del juego
+            SDL_Delay(8); // delay juego 8ms es 120fps
         }
         else {
             // pausa
@@ -458,9 +464,10 @@ int main(int argc, char* argv[]) {
             doInput(); // manejar la entrada del usuario en el juego
             renderPauseButton(); // dibujar botn pausa
             presentScene(); // presentar la escena de juego
-        }
 
-        SDL_Delay(8); // esperar milisegundos
+            // delay de la pausa
+            SDL_Delay(8); // delay pausa 8ms es 120fps
+        }
     }
 
     destroy_window();
