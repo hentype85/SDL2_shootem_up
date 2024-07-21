@@ -8,6 +8,7 @@
 #define FALSE 0
 
 #define TRANSITION_ALPHA 255
+#define TRANSITION_SPEED 4
 
 #define PLAYER_SPEED 3
 #define PLAYER_BULLET_SPEED 20
@@ -364,7 +365,7 @@ void prepareIntro() {
     SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
     SDL_RenderClear(app.renderer);
 
-    introTexture = loadTexture("./sprites/shooter.png");
+    introTexture = loadTexture("./sprites/background.png");
 }
 
 
@@ -380,7 +381,7 @@ void presentIntro() {
 
 
 void pauseButton() {
-    pauseButtonTexture = loadTexture("./sprites/sdl2.png");
+    pauseButtonTexture = loadTexture("./sprites/shooter.png");
 
     // dimensiones de la textura pausa
     int texW, texH;
@@ -441,8 +442,8 @@ int main(int argc, char* argv[]) {
 
             // transicion al salir de la intro
             if (transition_alpha > 0) {
-                transition_alpha -= 1; // velocidad de la transición
-                is_paused = FALSE; // desactivar la pausa
+                transition_alpha -= TRANSITION_SPEED; // disminuir la opacidad
+                is_paused = FALSE; // desactivar la pausa durante la intro
             }
             else {
                 intro_state = FALSE; // desactivar la intro
