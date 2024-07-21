@@ -7,12 +7,14 @@
 #define TRUE 1
 #define FALSE 0
 
-#define PLAYER_SPEED 5
+#define TRANSITION_ALPHA 255
+
+#define PLAYER_SPEED 3
 #define PLAYER_BULLET_SPEED 20
 #define PLAYER_BULLET_COUNT 9
 #define ENEMY_SPEED 3
 #define ENEMY_COUNT 10
-#define ENEMY_MARGIN 150
+#define ENEMY_MARGIN 400
 #define ENEMY_BULLET_COUNT 10
 #define ENEMY_BULLET_SPEED 5
 
@@ -234,7 +236,7 @@ void enemyLogic() {
 
         // control de disparo
         // si el enemigo esta activo y el cooldown de disparo es mayor al valor aleatorio
-        if (enemy->health == 1 && enemy->fireCooldown > rand() % 300 + 100) {
+        if (enemy->health == 1 && enemy->fireCooldown > rand() % 300 + 100 && enemy->x < SCREEN_WIDTH) {
             for (int j = 0; j < ENEMY_BULLET_COUNT; j++) { // recorrer la lista de balas de los enemigos
                 if (enemyBulletList[j].health == 0) { 
                     enemyBulletList[j].x = enemy->x - 10; // ajustar la posicion de la bala
@@ -377,7 +379,7 @@ void presentIntro() {
 }
 
 
-void renderPauseButton() {
+void pauseButton() {
     pauseButtonTexture = loadTexture("./sprites/sdl2.png");
 
     // dimensiones de la textura pausa
@@ -425,7 +427,7 @@ int main(int argc, char* argv[]) {
     is_paused = FALSE; // estado de pausa
 
     intro_state = TRUE; // estado de la intro
-    transition_alpha = 255; // transicion de la intro
+    transition_alpha = TRANSITION_ALPHA; // 255 = opaco, 0 = transparente
 
     initStage(); // inicializar la escena de juego
 
@@ -439,7 +441,8 @@ int main(int argc, char* argv[]) {
 
             // transicion al salir de la intro
             if (transition_alpha > 0) {
-                transition_alpha -= 1; // velocidad de la transicion
+                transition_alpha -= 1; // velocidad de la transición
+                is_paused = FALSE; // desactivar la pausa
             }
             else {
                 intro_state = FALSE; // desactivar la intro
@@ -462,7 +465,7 @@ int main(int argc, char* argv[]) {
             // pausa
             prepareScene(); // preparar la escena de juego
             doInput(); // manejar la entrada del usuario en el juego
-            renderPauseButton(); // dibujar botn pausa
+            pauseButton(); // mostrar el boton de pausa
             presentScene(); // presentar la escena de juego
 
             // delay de la pausa
