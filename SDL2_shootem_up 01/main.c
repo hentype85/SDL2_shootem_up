@@ -373,10 +373,17 @@ void presentIntro() {
     SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
     SDL_RenderClear(app.renderer); // limpiar la pantalla
 
-    SDL_SetTextureAlphaMod(introTexture, transition_alpha); // aplicar la opacidad
-    SDL_RenderCopy(app.renderer, introTexture, NULL, NULL); // copiar la textura en la pantalla
+    if (transition_alpha > 0) { // se decrementa la opacidad
+        SDL_SetTextureAlphaMod(introTexture, transition_alpha); // aplicar la opacidad
+        SDL_RenderCopy(app.renderer, introTexture, NULL, NULL); // copiar la textura en la pantalla
 
-    SDL_RenderPresent(app.renderer); // presentar la pantalla
+        SDL_RenderPresent(app.renderer); // presentar la pantalla
+    }
+    else {
+        SDL_DestroyTexture(introTexture); // liberar la textura
+    }
+
+    transition_alpha -= TRANSITION_SPEED; // disminuir la opacidad  
 }
 
 
@@ -442,7 +449,6 @@ int main(int argc, char* argv[]) {
 
             // transicion al salir de la intro
             if (transition_alpha > 0) {
-                transition_alpha -= TRANSITION_SPEED; // disminuir la opacidad
                 is_paused = FALSE; // desactivar la pausa durante la intro
             }
             else {
