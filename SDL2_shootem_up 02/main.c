@@ -58,7 +58,6 @@ void destroy_window() {
 }
 
 
-
 void doKeyDown(SDL_KeyboardEvent *event) {
     if (event->repeat == 0) {
         if (event->keysym.scancode == SDL_SCANCODE_W) {
