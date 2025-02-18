@@ -7,9 +7,6 @@
 #define TRUE 1
 #define FALSE 0
 
-#define TRANSITION_ALPHA 255
-#define TRANSITION_SPEED 4
-
 #define PLAYER_SPEED 3
 #define PLAYER_BULLET_SPEED 20
 #define PLAYER_BULLET_COUNT 9
@@ -40,11 +37,13 @@ typedef struct Entity {
 } Entity;
 
 int game_is_running;
+int start_screen_state;
 int is_paused;
 int is_gameover;
+SDL_Texture *startscreenTexture;
 SDL_Texture *gameOverTexture;
 SDL_Texture *pauseButtonTexture;
-int intro_state, transition_alpha;
+int  transition_flag, transition_alpha;
 SDL_Texture *introTexture;
 
 App app;
@@ -57,6 +56,8 @@ void destroy_window() {
     SDL_DestroyWindow(app.window);
     SDL_Quit();
 }
+
+
 
 void doKeyDown(SDL_KeyboardEvent *event) {
     if (event->repeat == 0) {
@@ -74,7 +75,6 @@ void doKeyDown(SDL_KeyboardEvent *event) {
         }
         if (event->keysym.scancode == SDL_SCANCODE_SPACE) {
             app.fire = 1;
-            intro_state = FALSE;
         }
     }
 }
@@ -94,7 +94,6 @@ void doKeyUp(SDL_KeyboardEvent *event) {
         }
         if (event->keysym.scancode == SDL_SCANCODE_SPACE) {
             app.fire = 0;
-            intro_state = FALSE;
         }
     }
 }
@@ -120,7 +119,7 @@ void doInput() {
         case SDL_KEYUP:
             doKeyUp(&event.key); // manejar eventos de tecla liberada
             break;
-        
+
         default:
             break;
     }
@@ -145,7 +144,6 @@ void render(SDL_Texture *texture, int x, int y, int w, int h) {
 
     SDL_QueryTexture(texture, NULL, NULL, &dest.w, &dest.h);
     SDL_RenderCopy(app.renderer, texture, NULL, &dest);
-
 
     // mostrar rectangulo de colision verde
     SDL_SetRenderDrawColor(app.renderer, 0, 255, 0, 255); // color verde
@@ -349,11 +347,38 @@ void playerBulletLogic() {
     player->fireCooldown++; // incrementar
 }
 
+
 void logic() {
     playerLogic();
     playerBulletLogic();
     enemyLogic();
     enemyBulletLogic();
+}
+
+
+void preparestartscreen() {
+    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
+    SDL_RenderClear(app.renderer);
+
+    startscreenTexture = loadTexture("./sprites/shooter.png");
+}
+
+
+void presentstartscreen() {
+    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
+    SDL_RenderClear(app.renderer);
+
+    // mostrar la pantalla de inicio
+    int texW, texH;
+    SDL_QueryTexture(startscreenTexture, NULL, NULL, &texW, &texH); // obtener dimensiones de la textura
+    int startscreenX = (SCREEN_WIDTH - texW) / 2;
+    int startscreenY = (SCREEN_HEIGHT - texH) / 2;
+
+    render(startscreenTexture, startscreenX, startscreenY, texW, texH);  // dibujar textura del fondo
+
+    SDL_RenderPresent(app.renderer);  // actualizar la pantalla
+
+    SDL_DestroyTexture(startscreenTexture); // liberar la textura
 }
 
 
@@ -368,29 +393,20 @@ void presentScene(void) {
 }
 
 
-void prepareIntro() {
-    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
-    SDL_RenderClear(app.renderer);
-
-    introTexture = loadTexture("./sprites/background.png");
+void prepareTransition() {
+    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
+    SDL_RenderClear(app.renderer); // limpiar la pantalla
 }
 
 
-void presentIntro() {
-    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
-    SDL_RenderClear(app.renderer); // limpiar la pantalla
-
+void presentTransition() {
     if (transition_alpha > 0) { // se decrementa la opacidad
-        SDL_SetTextureAlphaMod(introTexture, transition_alpha); // aplicar la opacidad
-        SDL_RenderCopy(app.renderer, introTexture, NULL, NULL); // copiar la textura en la pantalla
-
+        SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, transition_alpha); // color de fondo
+        SDL_RenderFillRect(app.renderer, NULL); // copiar la textura en la pantalla
         SDL_RenderPresent(app.renderer); // presentar la pantalla
     }
-    else {
-        SDL_DestroyTexture(introTexture); // liberar la textura
-    }
 
-    transition_alpha -= TRANSITION_SPEED; // disminuir la opacidad  
+    transition_alpha -= 1; // disminuir la opacidad de la transicion
 }
 
 
@@ -430,6 +446,7 @@ void pauseButton() {
     SDL_DestroyTexture(pauseButtonTexture); // liberar la textura de pausa
 }
 
+
 int initSDL() {
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
         printf("Couldn't initialize SDL: %s\n", SDL_GetError());
@@ -454,65 +471,82 @@ int initSDL() {
 }
 
 
+void sceneTransition() {
+    // transicion cambio escena
+    prepareTransition();
+    doInput(); // manejar la entrada del usuario en el juego
+    presentTransition();
+    if (transition_alpha > 0) {
+        is_paused = FALSE; // desactivar la pausa durante la transicion
+    }
+
+    // delay de la transicion
+    SDL_Delay(360); // delay transicion 360ms es 3fps
+}
+
+
 int main(int argc, char* argv[]) {
 
     game_is_running = initSDL();
+    start_screen_state = TRUE; // estado de la pantalla de inicio
     is_paused = FALSE; // estado de pausa
     is_gameover = FALSE; // estado de game over
 
-    intro_state = TRUE; // estado de la intro
-    transition_alpha = TRANSITION_ALPHA; // 255 = opaco, 0 = transparente
+    transition_alpha = 180; // 255 = opaco, 0 = transparente
+    transition_flag = TRUE; // bandera de transicion
 
     initStage(); // inicializar la escena de juego
 
     while(game_is_running) {
-
-        if (intro_state) {
-            // intro
-            prepareIntro();
+    
+        if (start_screen_state) {
+            // pantalla de inicio
+            preparestartscreen();
             doInput(); // manejar la entrada del usuario en el juego
-            presentIntro();
+            presentstartscreen();
 
-            // transicion al salir de la intro
-            if (transition_alpha > 0) {
-                is_paused = FALSE; // desactivar la pausa durante la intro
+            // presionar barra espaciadora para iniciar el juego
+            if (app.fire) {
+                start_screen_state = FALSE;
+                sceneTransition();
             }
-            else {
-                intro_state = FALSE; // desactivar la intro
-            }
-
-            // delay de la intro
-            SDL_Delay(8); // delay intro 8ms es 120fps
-        }
-        else if (is_gameover) {
-            // game over
-            prepareScene(); // preparar la escena de juego
-            doInput(); // manejar la entrada del usuario en el juego
-            gameOver(); // mostrar la pantalla de game over
-            presentScene(); // presentar la escena de juego
-
-            // delay del game over
-            SDL_Delay(64); // delay game over 64ms es 15fps
-        }
-        else if (!is_paused) {
-            // juego
-            prepareScene(); // preparar la escena de juego
-            doInput(); // manejar la entrada del usuario en el juego
-            logic(); // logica del juego
-            presentScene(); // presentar la escena de juego
-
-            // delay del juego
-            SDL_Delay(8); // delay juego 8ms es 120fps
         }
         else {
-            // pausa
-            prepareScene(); // preparar la escena de juego
-            doInput(); // manejar la entrada del usuario en el juego
-            pauseButton(); // mostrar el boton de pausa
-            presentScene(); // presentar la escena de juego
+            if (is_gameover) {
 
-            // delay de la pausa
-            SDL_Delay(8); // delay pausa 8ms es 120fps
+                if (transition_flag == TRUE) {
+                    sceneTransition();
+                    transition_flag = FALSE;
+                }
+                // game over
+                prepareScene(); // preparar la escena de juego
+                doInput(); // manejar la entrada del usuario en el juego
+                gameOver(); // mostrar la pantalla de game over
+                presentScene(); // presentar la escena de juego
+
+                // delay del game over
+                SDL_Delay(64); // delay game over 64ms es 15fps
+            }
+            else if (!is_paused) {
+                // juego
+                prepareScene(); // preparar la escena de juego
+                doInput(); // manejar la entrada del usuario en el juego
+                logic(); // logica del juego
+                presentScene(); // presentar la escena de juego
+
+                // delay del juego
+                SDL_Delay(8); // delay juego 8ms es 120fps
+            }
+            else {
+                // pausa
+                prepareScene(); // preparar la escena de juego
+                doInput(); // manejar la entrada del usuario en el juego
+                pauseButton(); // mostrar el boton de pausa
+                presentScene(); // presentar la escena de juego
+
+                // delay de la pausa
+                SDL_Delay(8); // delay pausa 8ms es 120fps
+            }
         }
     }
 
