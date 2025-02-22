@@ -43,7 +43,7 @@ int is_gameover;
 SDL_Texture *startscreenTexture;
 SDL_Texture *gameOverTexture;
 SDL_Texture *pauseButtonTexture;
-int  transition_flag, transition_alpha;
+int  transition_flag;
 SDL_Texture *introTexture;
 
 App app;
@@ -392,23 +392,6 @@ void presentScene(void) {
 }
 
 
-void prepareTransition() {
-    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
-    SDL_RenderClear(app.renderer); // limpiar la pantalla
-}
-
-
-void presentTransition() {
-    if (transition_alpha > 0) { // se decrementa la opacidad
-        SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, transition_alpha); // color de fondo
-        SDL_RenderFillRect(app.renderer, NULL); // copiar la textura en la pantalla
-        SDL_RenderPresent(app.renderer); // presentar la pantalla
-    }
-
-    transition_alpha -= 1; // disminuir la opacidad de la transicion
-}
-
-
 void gameOver() {
     // dimensiones de la textura game over
     gameOverTexture = loadTexture("./sprites/gameover.png");
@@ -471,16 +454,13 @@ int initSDL() {
 
 
 void sceneTransition() {
-    // transicion cambio escena
-    prepareTransition();
-    doInput(); // manejar la entrada del usuario en el juego
-    presentTransition();
-    if (transition_alpha > 0) {
-        is_paused = FALSE; // desactivar la pausa durante la transicion
-    }
+    SDL_RenderClear(app.renderer); // limpiar la pantalla
+    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255); // color de fondo
+    SDL_RenderFillRect(app.renderer, NULL); // copiar la textura en la pantalla
+    SDL_RenderPresent(app.renderer); // presentar la pantalla
 
     // delay de la transicion
-    SDL_Delay(360); // delay transicion 360ms es 3fps
+    SDL_Delay(256); // delay de la transicion 256ms es 4fps
 }
 
 
@@ -490,14 +470,12 @@ int main(int argc, char* argv[]) {
     start_screen_state = TRUE; // estado de la pantalla de inicio
     is_paused = FALSE; // estado de pausa
     is_gameover = FALSE; // estado de game over
-
-    transition_alpha = 180; // 255 = opaco, 0 = transparente
     transition_flag = TRUE; // bandera de transicion
 
     initStage(); // inicializar la escena de juego
 
     while(game_is_running) {
-    
+
         if (start_screen_state) {
             // pantalla de inicio
             preparestartscreen();
